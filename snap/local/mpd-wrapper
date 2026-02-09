@@ -1,0 +1,32 @@
+#!/bin/sh
+set -e
+
+CONF="$SNAP_USER_DATA/mpd.conf"
+STATE="$SNAP_DATA"
+MUSIC="$SNAP_USER_COMMON/music"
+
+mkdir -p \
+  "$STATE/playlists" \
+  "$SNAP_USER_DATA" \
+  "$MUSIC"
+
+if [ ! -f "$CONF" ]; then
+  cat > "$CONF" <<EOF
+music_directory     "$MUSIC"
+playlist_directory  "$STATE/playlists"
+db_file             "$STATE/database"
+log_file            "$STATE/log"
+pid_file            "$STATE/pid"
+state_file          "$STATE/state"
+sticker_file        "$STATE/sticker.sql"
+
+bind_to_address     "$STATE/socket"
+
+audio_output {
+    type "pipewire"
+    name "PipeWire"
+}
+EOF
+fi
+
+exec "$SNAP/usr/bin/mpd" --no-daemon "$CONF"

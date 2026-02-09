@@ -1,0 +1,68 @@
+name: mpd-strict
+base: core24
+version: '0.23.15'
+summary: Music Player Daemon (PipeWire, strict, minimal)
+description: |
+  MPD built from source with PipeWire output.
+  Strict confinement, snap-owned directories.
+  Minimal feature set, deterministic runtime.
+
+grade: stable
+confinement: strict
+
+apps:
+  mpd:
+    command: bin/mpd-wrapper
+    daemon: simple
+    restart-condition: always
+    plugs:
+      - audio-playback
+      - network
+
+parts:
+  mpd:
+    plugin: meson
+    source: https://www.musicpd.org/download/mpd/0.23/mpd-0.23.15.tar.xz
+
+    meson-parameters:
+      - --prefix=/usr
+      - -Dpipewire=enabled
+      - -Dsystemd=disabled
+
+    build-packages:
+      - build-essential
+      - pkg-config
+      - meson
+      - ninja-build
+      - libboost-dev
+      - libpipewire-0.3-dev
+      - libsqlite3-dev
+      - libflac-dev
+      - libvorbis-dev
+      - libogg-dev
+      - libmpg123-dev
+      - libid3tag0-dev
+
+    stage-packages:
+      - libpipewire-0.3-0
+      - libsqlite3-0
+      - libflac12
+      - libvorbis0a
+      - libogg0
+      - libmpg123-0
+      - libid3tag0
+      - libstdc++6
+      - libblas3   # 🔥 THIS IS THE FIX
+      - libvorbis0a
+      - libvorbisenc2
+
+    prime:
+      - usr/bin/mpd
+      - usr/lib/**
+
+  wrapper:
+    plugin: dump
+    source: snap/local
+    organize:
+      mpd-wrapper: bin/mpd-wrapper
+
