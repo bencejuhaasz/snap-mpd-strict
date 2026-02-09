@@ -1,26 +1,42 @@
 #!/bin/sh
-set -e
+set -eu
 
+# --- User-writable snap paths ONLY ---
 CONF="$SNAP_USER_DATA/mpd.conf"
-STATE="$SNAP_DATA"
-MUSIC="$SNAP_USER_COMMON/music"
+STATE="$SNAP_USER_DATA"
+COMMON="$SNAP_USER_COMMON"
+MUSIC="$COMMON/music"
 
+LOG="$STATE/mpd.log"
+DB="$STATE/database"
+PID="$STATE/pid"
+STATEFILE="$STATE/state"
+STICKER="$STATE/sticker.sql"
+PLAYLISTS="$STATE/playlists"
+SOCKET="$STATE/socket"
+
+# --- Ensure directories ---
 mkdir -p \
-  "$STATE/playlists" \
-  "$SNAP_USER_DATA" \
+  "$STATE" \
+  "$PLAYLISTS" \
+  "$COMMON" \
   "$MUSIC"
 
+# --- Ensure log file ---
+touch "$LOG"
+
+# --- Generate config once ---
 if [ ! -f "$CONF" ]; then
   cat > "$CONF" <<EOF
 music_directory     "$MUSIC"
-playlist_directory  "$STATE/playlists"
-db_file             "$STATE/database"
-log_file            "$STATE/log"
-pid_file            "$STATE/pid"
-state_file          "$STATE/state"
-sticker_file        "$STATE/sticker.sql"
+playlist_directory  "$PLAYLISTS"
+db_file             "$DB"
+log_file            "$LOG"
+pid_file            "$PID"
+state_file          "$STATEFILE"
+sticker_file        "$STICKER"
 
-bind_to_address     "$STATE/socket"
+bind_to_address     "$SOCKET"
 
 audio_output {
     type "pipewire"
@@ -30,3 +46,4 @@ EOF
 fi
 
 exec "$SNAP/usr/bin/mpd" --no-daemon "$CONF"
+
