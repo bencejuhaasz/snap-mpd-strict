@@ -12,12 +12,17 @@ confinement: strict
 
 apps:
   mpd:
-    command: bin/mpd-wrapper
-    daemon: simple
-    restart-condition: always
+    command: bin/mpd-wrapper --no-daemon
+    environment:
+      LD_LIBRARY_PATH: >
+        $SNAP/usr/lib/x86_64-linux-gnu:
+        $SNAP/usr/lib/x86_64-linux-gnu/pulseaudio:
+        $SNAP/lib/x86_64-linux-gnu:
+        $SNAP/lib:
+        $LD_LIBRARY_PATH
     plugs:
+      - network-bind
       - audio-playback
-      - network
 
 parts:
   mpd:
@@ -26,7 +31,7 @@ parts:
 
     meson-parameters:
       - --prefix=/usr
-      - -Dpipewire=enabled
+      - -Dpulse=enabled
       - -Dsystemd=disabled
 
     build-packages:
@@ -42,6 +47,8 @@ parts:
       - libogg-dev
       - libmpg123-dev
       - libid3tag0-dev
+      - libpulse-dev
+      - libpulse0
 
     stage-packages:
       - libpipewire-0.3-0
@@ -52,9 +59,10 @@ parts:
       - libmpg123-0
       - libid3tag0
       - libstdc++6
-      - libblas3   # 🔥 THIS IS THE FIX
-      - libvorbis0a
+      - libblas3
       - libvorbisenc2
+      - pulseaudio
+      - libpulse0
 
     prime:
       - usr/bin/mpd
@@ -65,4 +73,3 @@ parts:
     source: snap/local
     organize:
       mpd-wrapper: bin/mpd-wrapper
-

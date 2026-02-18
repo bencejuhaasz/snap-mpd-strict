@@ -1,6 +1,10 @@
 #!/bin/sh
 set -eu
 
+# --- FORCE host user runtime for PipeWire ---
+export XDG_RUNTIME_DIR="/run/user/$(id -u)"
+export PIPEWIRE_REMOTE="pipewire-0"
+
 # --- User-writable snap paths ONLY ---
 CONF="$SNAP_USER_DATA/mpd.conf"
 STATE="$SNAP_USER_DATA"
@@ -8,12 +12,11 @@ COMMON="$SNAP_USER_COMMON"
 MUSIC="$COMMON/music"
 
 LOG="$STATE/mpd.log"
-DB="$STATE/database"
+DB="$COMMON/database"
 PID="$STATE/pid"
 STATEFILE="$STATE/state"
 STICKER="$STATE/sticker.sql"
 PLAYLISTS="$STATE/playlists"
-SOCKET="$STATE/socket"
 
 # --- Ensure directories ---
 mkdir -p \
@@ -22,8 +25,10 @@ mkdir -p \
   "$COMMON" \
   "$MUSIC"
 
-# --- Ensure log file ---
+# --- Ensure files exist ---
 touch "$LOG"
+touch "$DB"
+touch "$STATEFILE"
 
 # --- Generate config once ---
 if [ ! -f "$CONF" ]; then
@@ -36,14 +41,15 @@ pid_file            "$PID"
 state_file          "$STATEFILE"
 sticker_file        "$STICKER"
 
-bind_to_address     "$SOCKET"
+bind_to_address     "0.0.0.0"
 
 audio_output {
-    type "pipewire"
-    name "PipeWire"
+    type            "pulse"
+    name            "PulseAudio Output"
+    server          "/run/user/1000/pulse/native"
+    mixer_type      "software"
 }
 EOF
 fi
-
+export LD_LIBRARY_PATH=$SNAP/usr/lib/x86_64-linux-gnu/pulseaudio:$SNAP/usr/lib/x86_64-linux-gnu
 exec "$SNAP/usr/bin/mpd" --no-daemon "$CONF"
-
